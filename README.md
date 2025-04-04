@@ -6,11 +6,14 @@ To start using:
 Set the following venv variables:
 
 API_KEY=
+
 API_SECRET=
+
 
 Then enter the platforms to monitor in platform.cfg using the following format:
 
 Platform, Software Version, Minimum Severity, Minimum Case Count
+
 For example: Cisco Catalyst 9300 Series Switches, 17.6.5, 2, 3
 
 Repeated runs will check if any new bugs have appeared since the last run.
