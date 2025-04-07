@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<title>Platform List</title>
+<table>
+<tr>
+    <th>Platform</th>
+    <th>Software</th>
+    <th>Severity</th>
+    <th>Min Cases</th>
+</tr>
+{% for p in platform_list %}
+    <tr>
+    {% for i in p.split(',') %}
+        <td>{{ i }}</td>
+    {% endfor %}
+    </tr>
+{% endfor %}
+</table>
+<p></p>
+<p><b>Modify Table</b></p>
+<form action ="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <p>{{ form.platform_file(rows=20) }}</p>
+    <p>{{ form.submit }}</p>
+</form>
+{% endblock %}

@@ -6,7 +6,12 @@ import logging
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='main.log', level=logging.INFO)
+hdlr = logging.StreamHandler()
+fhdlr = logging.FileHandler("main.log")
+logger.addHandler(hdlr)
+logger.addHandler(fhdlr)
+logger.setLevel(logging.INFO)
+
 #Setup Authentication Token
 def get_token():
 
@@ -20,9 +25,11 @@ def get_token():
         "client_id" : API_KEY,
         "client_secret" : API_SECRET
     }
-
-    request = requests.post(url, data=payload, headers=headers)
-    return request.json()['access_token']
+    try:
+        request = requests.post(url, data=payload, headers=headers)
+        return request.json()['access_token']
+    except:
+        logger.error('API Authentication failed, credentials incorrect or API inaccessible')
 
 #Helper function to paginate API responses since we get 10 records per page
 def paginate(url, headers, params, page):
@@ -40,6 +47,7 @@ def get_bug_list_platform_version(platform, version, severity, cases):
     }
     params = {
         'severity' : severity,
+        'modified_date' : 5
     }
 
     url = BUG_SERVER + '/product_series/' + platform + '/affected_releases/' + version
@@ -50,9 +58,9 @@ def get_bug_list_platform_version(platform, version, severity, cases):
 
     #paginates the responses and stores bug IDs if there are 3 or more cases attached.
 
-    while last_index > page_index:
+    while last_index >= page_index:
         for b in request.json()['bugs']:
-            if int(b['support_case_count']) > int(cases):
+            if int(b['support_case_count']) >= int(cases):
                 bug_list.append(b['bug_id'])
         
         request = paginate(url, headers, params, page_index+1)
@@ -78,38 +86,40 @@ def notify(notify_list):
     #dedup using set. Some platforms will have the same bugs
     notify_list = set(notify_list)
     if not notify_list:
-        logging.info('Ran ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' no changes ')
+        logger.info('Ran ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' no changes ')
     else:
-        logging.info('Ran ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' found bugs ' + str(notify_list))
+        logger.info('Ran ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' found bugs ' + str(notify_list))
 
-#Compare bug_list to the list from saved files to see if there's anything new.
+#Compare bug_list to the list from saved files to see if there's anything new. Write bug files with new data.
 def check_list(platform, ver, bug_list):
     #A file with old bugs exists from the last time we ran, let's check what's new, add them to notify_list
-    if os.path.isfile(platform + ver):
-            logger.info('Found File - ' + platform + ver)
+    if os.path.isfile(platform + ver + '.bug'):
+            logger.info('Found File - ' + platform + ver + '.bug')
             try:
-                f = open(platform + ver, 'r')
+                f = open(platform + ver + '.bug', 'r')
                 bugs_old = f.read().split(',')
                 f.close()
                 notify_list = list(set(bug_list) - set(bugs_old))
-                f = open(platform + ver, 'a')
-                delimiter = ","
-                f.write(',' + delimiter.join(notify_list))
-                f.close()
+                #if list has new things, write it into the bug file.
+                if notify_list:
+                    f = open(platform + ver + '.bug', 'a')
+                    delimiter = ","
+                    f.write(',' + delimiter.join(notify_list))
+                    f.close()
                 return notify_list
             except:
-                logging.error('Error opening file: ' + platform + ver)
+                logger.error('Error opening file: ' + platform + ver + '.bug')
 
         #Initialize a file with a list of bugs, we'll use this to track compare and track changes next time this code runs.
     else:
         try:
-            f = open(platform + ver, 'w')
+            f = open(platform + ver + '.bug', 'w')
             delimter = ","
             f.write(delimter.join(bug_list))
             f.close()
-            logging.info('New platform discovered, creating: ' + platform + ver)
+            logger.info('New platform discovered, creating: ' + platform + ver + '.bug')
         except:
-            logging.error('Error creating bug files')
+            logger.error('Error creating bug files')
         empty_list = []
         return empty_list
 
@@ -122,7 +132,7 @@ API_SECRET = os.getenv('API_SECRET')
 BUG_SERVER = 'https://apix.cisco.com/bug/v2.0/bugs/'
 TOKEN = get_token()
 
-if __name__ == '__main__':
+def main():
 
     #iterate through platform.cfg to get the platform/software and parameters we're checking
     platform_list = read_platform_cfg()
@@ -140,5 +150,8 @@ if __name__ == '__main__':
         #check if there's any new bugs, if so append it to notify_list
         notify_list.extend(check_list(platform, ver, bug_list))
 
-#check for duplicates and then send notification!
-notify(notify_list)
+    #check for duplicates and then send notification!
+    notify(notify_list)
+
+if __name__ == '__main__':
+    main()

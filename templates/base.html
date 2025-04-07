@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+    <style>
+        body{
+            text-align: center;
+        }
+        table {
+            text-align: left;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        tr {
+            border-bottom: 1px solid black;
+        }
+        tr:hover {
+            background-color: #D6EEEE;
+        }
+        th {
+            text-align: left;
+        }
+        form textarea{
+            display: inline-block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 500px;
+        }
+        ul  {
+            list-style-type: none;
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+    <body>
+        <div style="display: block;">
+            <div>
+                <div><h3>Cisco Bug Notification Tool</h3></div>
+                <div><a href="/config">Config</a> | <a href="/platform">Platform</a> | <a href="/log">Log</a></div>
+            </div>
+            <hr>
+            <div style = "margin-top:2em;">
+            {% block content %}{% endblock %}
+            </div>
+            <div>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <ul>
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+            </div>
+        </div>
+    </body>
+</html>

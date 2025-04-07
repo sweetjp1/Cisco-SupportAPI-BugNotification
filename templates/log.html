@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style = "text-align: left;">
+        <form action ="" method="post" novalidate>
+            {{ form.hidden_tag() }}
+            {{ form.delete }}
+            {{ form.run }}
+        </form>
+        <p></p>
+        {% autoescape false %}
+        {{ logfile|replace('\n', "<br/>") }}
+        {% endautoescape %}
+    </div>
+{% endblock %}

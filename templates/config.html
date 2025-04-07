@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style = "text-align: left;">
+
+        <h3>Support API Configuration</h3>
+        <form action ="" method="post" novalidate>
+            {{ api_form.hidden_tag() }}
+            <p>
+                {{ api_form.key.label }}<br>
+                {{ api_form.key(size=50) }}
+            </p>
+            <p>
+                {{ api_form.client_secret.label }}<br>
+                {{ api_form.client_secret(size=50) }}
+            </p>
+            <p>{{ api_form.submit }}</p>
+        </form>
+        <h3>Email Notification List</h3>
+        {% autoescape false %}
+        {{ emails|replace(',', "<br/>") }}
+        {% endautoescape %}
+        <form action ="" method="post" novalidate>
+            {{ email_form.hidden_tag() }}
+            <p>
+                {{ email_form.email_list }}
+            </p>
+            <p>{{ email_form.submit }}</p>
+        </form>
+    </div>
+{% endblock %}
