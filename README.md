@@ -1,5 +1,5 @@
 This code can be used to send email notifications when new Cisco bugs appear that meet specific conditions. It uses the support API https://developer.cisco.com/site/support-apis/ which requires either SNTC or PSS.
-Note: Notification is not coded in yet, new bugs are logged under main.log
+Note: Notifications use mailgun in this POV, but you can plug in any notification service you want.
 
 To start using:
 
