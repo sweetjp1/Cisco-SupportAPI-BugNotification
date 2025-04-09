@@ -66,8 +66,6 @@ def config():
         flash('Notification Emails Saved')
         return redirect('/config')
     
-    #OSENVIRON DOES NOT REFRESH. MAKE THIS A SEPARATE FILE.
-
     emails=os.getenv("EMAIL_LIST")
     email_form.email_list.data = emails
 

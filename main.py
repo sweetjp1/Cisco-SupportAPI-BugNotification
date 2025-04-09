@@ -57,17 +57,21 @@ def get_bug_list_platform_version(platform, version, severity, cases):
     page_index = request.json()['pagination_response_record']['page_index']
 
     #paginates the responses and stores bug IDs if there are 3 or more cases attached.
+    try:
+        while last_index >= page_index:
+            for b in request.json()['bugs']:
+                if int(b['support_case_count']) >= int(cases):
+                    bug_list.append(b['bug_id'])
+            
+            request = paginate(url, headers, params, page_index+1)
+            page_index += 1
 
-    while last_index >= page_index:
-        for b in request.json()['bugs']:
-            if int(b['support_case_count']) >= int(cases):
-                bug_list.append(b['bug_id'])
-        
-        request = paginate(url, headers, params, page_index+1)
-        page_index += 1
+        return bug_list
+    except:
+        logger.info("BUG API Response Error: " + str(request.status_code) + " " + str(request.content))
 
 
-    return bug_list
+    
 
 #Helper function to read platform.cfg file
 def read_platform_cfg():
@@ -81,6 +85,20 @@ def read_platform_cfg():
             print('Error opening platform.cfg')
     return platform_list
 
+#Helper function to lookup bug details in bug_list to put them in the notification
+def bugs_lookup(bug_list):
+    result_list = []
+    headers = {
+        'Authorization' : 'Bearer ' + TOKEN
+    }
+    url = BUG_SERVER + 'bug_ids/'
+    for b in bug_list:
+        request = requests.get(url + b, headers=headers)
+        result_list.append(request.json()['bugs'])
+
+    return result_list
+
+
 #Log and notify based on new bugs
 def notify(notify_list):
     #dedup using set. Some platforms will have the same bugs
@@ -89,6 +107,21 @@ def notify(notify_list):
         logger.info('Ran ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' no changes ')
     else:
         logger.info('Ran ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' found bugs ' + str(notify_list))
+
+        results_list=bugs_lookup(notify_list)
+
+        mailgun_domain = os.getenv('MAILGUN_DOMAIN')
+        response = requests.post(
+                "https://api.mailgun.net/v3/" + mailgun_domain + "/messages",
+                auth=("api", os.getenv('MAILGUN_KEY')),
+                data={
+                    "from": "Cisco Bug Notification <postmaster@" + mailgun_domain + ">",
+                    "to": "Edgar Lim <evelasq31@gmail.com>",
+                    "subject": "New Cisco Bugs Discovered on Monitored Platforms",
+                    "text": "List of new bugs: " + str(notify_list) + "\n" + json.dumps(results_list, indent=4)
+                    }
+            )
+        logger.info("Mail Service Response: " + str(response.status_code) + " " + str(response.content))
 
 #Compare bug_list to the list from saved files to see if there's anything new. Write bug files with new data.
 def check_list(platform, ver, bug_list):
@@ -123,16 +156,22 @@ def check_list(platform, ver, bug_list):
         empty_list = []
         return empty_list
 
-
+load_dotenv()
 
 #load API credentials from venv
-load_dotenv()
-API_KEY = os.getenv('API_KEY')
-API_SECRET = os.getenv('API_SECRET')
-BUG_SERVER = 'https://apix.cisco.com/bug/v2.0/bugs/'
-TOKEN = get_token()
+
 
 def main():
+    
+    global API_KEY
+    global API_SECRET
+    global BUG_SERVER
+    global TOKEN
+
+    API_KEY = os.getenv('API_KEY')
+    API_SECRET = os.getenv('API_SECRET')
+    BUG_SERVER = 'https://apix.cisco.com/bug/v2.0/bugs/'
+    TOKEN = get_token()
 
     #iterate through platform.cfg to get the platform/software and parameters we're checking
     platform_list = read_platform_cfg()

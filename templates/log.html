@@ -1,12 +1,15 @@
 {% extends 'base.html' %}
+{% set active_page = "log" %}
 
 {% block content %}
-    <div style = "text-align: left;">
+    <div class = "container text-break">
         <form action ="" method="post" novalidate>
             {{ form.hidden_tag() }}
             {{ form.delete }}
             {{ form.run }}
         </form>
+        <p></p>
+        <h3>Log</h3>
         <p></p>
         {% autoescape false %}
         {{ logfile|replace('\n', "<br/>") }}

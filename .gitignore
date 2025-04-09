@@ -1,12 +1,6 @@
 dev.env
 .vscode/launch.json
-Cisco Catalyst 9300 Series Switches17.6.5
-Cisco Catalyst 9300 Series Switches17.9.5
 main.log
 .env
-Cisco Catalyst 9400 Series Switches17.9.5
-Cisco Catalyst 9300 Series Switches17.6.5.bug
-Cisco Catalyst 9300 Series Switches17.9.5.bug
-Cisco Catalyst 9400 Series Switches17.9.5.bug
 *.pyc
-Cisco Catalyst 9400 Series Switches17.6.5.bug
+*.bug
